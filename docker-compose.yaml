@@ -1,0 +1,92 @@
+version: "3.9"
+
+networks:
+  eth-faucet:
+    name: eth-faucet
+
+services:
+  eth-faucet-frontend:
+    build: ./frontend
+    container_name: eth-faucet-frontend
+    env_file:
+      - ./frontend/.env
+    environment:
+      ORIGIN: https://localhost:5173
+      PORT: 3000
+    networks:
+      - eth-faucet
+
+  eth-faucet-backend:
+    build: ./backend
+    container_name: eth-faucet-backend
+    env_file:
+      - ./frontend/.env
+    environment:
+      FAUCET_RPC_ENDPOINT: http://eth-faucet-suave:8545
+      FAUCET_REDIS_URL: redis://eth-faucet-redis:6379
+      FAUCET_SERVER_LISTEN_ADDRESS: :4000
+      FAUCET_WALLET_PRIVATE_KEY: "91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737ce12"
+    networks:
+      - eth-faucet
+    depends_on:
+      - eth-faucet-suave
+
+  eth-faucet-proxy:
+    image: nginx:1.25.4-bookworm
+    container_name: eth-faucet-proxy
+    entrypoint:
+      - /usr/bin/bash
+      - -c
+      - |-
+        mkdir -p /etc/nginx/tls
+        if [[ ! -f "$${TLS_DIR}/key.pem" ]] || [[ ! -f "$${TLS_DIR}/cert.pem" ]]; then
+          openssl req \
+            -x509 \
+            -newkey rsa:4096 \
+            -keyout $${TLS_DIR}/key.pem \
+            -out $${TLS_DIR}/cert.pem \
+            -sha256 \
+            -days 3650 \
+            -nodes \
+            -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
+        fi
+        /docker-entrypoint.sh nginx -g "daemon off;"
+    environment:
+      API_HOST: eth-faucet-backend
+      API_PORT: 4000
+      FRONTEND_HOST: eth-faucet-frontend
+      FRONTEND_PORT: 3000
+      PORT: 5173
+      TLS_DIR: /etc/nginx/tls
+    volumes:
+      - ./nginx:/etc/nginx/templates
+    ports:
+      - 5173:5173
+    networks:
+      - eth-faucet
+    depends_on:
+      - eth-faucet-backend
+      - eth-faucet-frontend
+
+  eth-faucet-redis:
+    image: redis:7.2.4-bookworm
+    container_name: eth-faucet-redis
+    ports:
+      - 6379:6379
+    networks:
+      - eth-faucet
+
+  eth-faucet-suave:
+    image: flashbots/suave-geth
+    container_name: eth-faucet-suave
+    command: [
+      "-dev",
+      "-http.addr", "0.0.0.0",
+      "-http.api", "debug,eth,net,txpool,web3",
+      "-http.corsdomain", "*",
+      "-http.vhosts", "*",
+      "-http",
+      "-suave.eth.external-whitelist", "*",
+    ]
+    networks:
+      - eth-faucet

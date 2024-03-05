@@ -1,0 +1,37 @@
+server {
+    server_name  localhost;
+    listen       0.0.0.0:${PORT}  ssl;
+
+    ssl_certificate      ${TLS_DIR}/cert.pem;
+    ssl_certificate_key  /etc/nginx/tls/key.pem;
+
+    location /api {
+        proxy_pass          http://api;
+        proxy_http_version  1.1;
+        proxy_set_header    Connection         "";
+        proxy_set_header    Host               "$host";
+        proxy_set_header    Upgrade            "$http_upgrade";
+        proxy_set_header    X-Forwarded-For    "$proxy_add_x_forwarded_for";
+        proxy_set_header    X-Forwarded-Proto  "$scheme";
+        proxy_set_header    X-Real-IP          "$remote_addr";
+    }
+
+    location / {
+        proxy_pass          http://frontend;
+        proxy_http_version  1.1;
+        proxy_set_header    Connection         "";
+        proxy_set_header    Host               "$host";
+        proxy_set_header    Upgrade            "$http_upgrade";
+        proxy_set_header    X-Forwarded-For    "$proxy_add_x_forwarded_for";
+        proxy_set_header    X-Forwarded-Proto  "$scheme";
+        proxy_set_header    X-Real-IP          "$remote_addr";
+    }
+}
+
+upstream api {
+    server ${API_HOST}:${API_PORT};
+}
+
+upstream frontend {
+    server ${FRONTEND_HOST}:${FRONTEND_PORT};
+}

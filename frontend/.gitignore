@@ -1,0 +1,17 @@
+# js
+
+/.svelte-kit
+build
+dist
+node_modules
+
+# environments
+
+.env
+.env.*
+!.env.example
+
+# tls files
+
+.tls/*
+!.tls/.gitkeep

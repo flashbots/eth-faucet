@@ -1,0 +1,34 @@
+{
+	"name": "eth-faucet",
+	"private": true,
+	"version": "1.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prettier": "prettier --write --plugin prettier-plugin-svelte 'src/**/*.{css,html,js,svelte}'"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-node": "^4.0.1",
+		"@sveltejs/kit": "^2.0.0",
+		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"@types/node": "^20.11.23",
+		"@vitejs/plugin-basic-ssl": "^1.1.0",
+		"prettier": "^3.0.0",
+		"prettier-plugin-svelte": "^3.0.0",
+		"svelte": "^4.2.7",
+		"vite": "^5.0.3"
+	},
+	"dependencies": {
+		"@auth/sveltekit": "^0.14.0",
+		"@ethersproject/address": "^5.7.0",
+		"@ethersproject/providers": "^5.7.2",
+		"animate.css": "^4.1.1",
+		"bulma": "^0.9.4",
+		"bulma-toast": "^2.4.3",
+		"express": "^4.18.3",
+		"jsonwebtoken": "^9.0.2",
+		"vite-express": "^0.15.0"
+	}
+}
