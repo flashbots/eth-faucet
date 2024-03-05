@@ -187,29 +187,33 @@ func (s *Server) ratelimitRequestFund(
 	entryIP := strings.TrimSpace(forwardedFor[len(forwardedFor)-1-s.cfg.Server.ProxyCount])
 
 	ratelimitKeys := map[string]time.Duration{
-		claims.Provider + ":" + claims.Username + ":" + request.Address: min(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentityAndAddress),
-		claims.Provider + ":" + claims.Username:                         min(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentity),
-		entryIP:                                                         min(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIP),
-		request.Address:                                                 min(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalAddress),
+		fmt.Sprintf("address:%s", request.Address):                                      max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalAddress),
+		fmt.Sprintf("full:%s:%s:%s", claims.Provider, claims.Username, request.Address): max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentityAndAddress),
+		fmt.Sprintf("identity:%s:%s", claims.Provider, claims.Username):                 max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentity),
+		fmt.Sprintf("ip:%s", entryIP):                                                   max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIP),
 	}
 
-	mostRecentTimestamp := time.Time{}
-	for key := range ratelimitKeys {
+	nextAllowed := time.Now()
+	for key, interval := range ratelimitKeys {
 		timestamp, err := s.ratelimiter.IsRegistered(r.Context(), key)
 		if err != nil {
 			return time.Duration(0), err
 		}
-		if timestamp.After(mostRecentTimestamp) {
-			mostRecentTimestamp = timestamp
+		timestamp = timestamp.Add(interval)
+		if timestamp.After(nextAllowed) {
+			nextAllowed = timestamp
 		}
 	}
-	interval := time.Since(mostRecentTimestamp)
+	interval := time.Until(nextAllowed)
 
-	if interval < s.cfg.Faucet.Interval {
-		return s.cfg.Faucet.Interval - interval, nil
+	if interval > time.Duration(0) {
+		return interval, nil
 	}
 
 	for key, expiry := range ratelimitKeys {
+		if strings.HasPrefix(key, "full:") { // debug
+			expiry = 24 * time.Hour
+		}
 		if err := s.ratelimiter.Register(r.Context(), key, expiry); err != nil {
 			return time.Duration(0), err
 		}
