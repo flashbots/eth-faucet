@@ -1,0 +1,8 @@
+# ide
+
+.idea
+.vscode
+
+# temporary files
+
+.temp
