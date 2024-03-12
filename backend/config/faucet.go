@@ -14,11 +14,8 @@ type Faucet struct {
 	Payout                     int64         `yaml:"payout"`
 }
 
-var (
-	bigInt = big.NewInt(0)
-	eth    = bigInt.Exp(big.NewInt(10), big.NewInt(18), nil)
-)
-
 func (f Faucet) PayoutWei() *big.Int {
+	bigInt := big.NewInt(0)
+	eth := bigInt.Exp(big.NewInt(10), big.NewInt(18), nil)
 	return bigInt.Mul(big.NewInt(f.Payout), eth)
 }
