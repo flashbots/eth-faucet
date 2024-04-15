@@ -184,13 +184,13 @@ func (s *Server) ratelimitRequestFund(
 	if len(forwardedFor) < s.cfg.Server.ProxyCount {
 		return time.Duration(0), fmt.Errorf("%w: %d", ErrRatelimiterTooFewProxies, len(forwardedFor))
 	}
-	entryIP := strings.TrimSpace(forwardedFor[len(forwardedFor)-1-s.cfg.Server.ProxyCount])
+	// entryIP := strings.TrimSpace(forwardedFor[len(forwardedFor)-1-s.cfg.Server.ProxyCount])
 
 	ratelimitKeys := map[string]time.Duration{
 		fmt.Sprintf("address:%s", request.Address):                                      max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalAddress),
 		fmt.Sprintf("full:%s:%s:%s", claims.Provider, claims.Username, request.Address): max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentityAndAddress),
 		fmt.Sprintf("identity:%s:%s", claims.Provider, claims.Username):                 max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIdentity),
-		fmt.Sprintf("ip:%s", entryIP):                                                   max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIP),
+		// fmt.Sprintf("ip:%s", entryIP):                                                   max(s.cfg.Faucet.Interval, s.cfg.Faucet.IntervalIP),
 	}
 
 	nextAllowed := time.Now()
